@@ -38,8 +38,32 @@
     }
 
     /* --- BASE RESET & ANIMATION --- */
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent; 
+      /* Prevent Text Selection */
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
     
+    /* Allow Text Selection only in Input Fields */
+    input, textarea {
+      -webkit-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+
+    /* Prevent Image Dragging & Long Press Callout */
+    img {
+      -webkit-user-drag: none;
+      user-drag: none;
+      -webkit-touch-callout: none;
+      pointer-events: none; /* Stops image specific right-clicks, let parent handle clicks */
+    }
+
     body {
       font-family: var(--font-body);
       background-color: var(--bg-dark);
@@ -477,6 +501,7 @@
       background: #fff;
       padding: 10px;
       border-radius: 10px;
+      /* Only allow QR image to have pointer events for scanning functionality if needed */
     }
     
     .qr-skeleton {
@@ -694,7 +719,7 @@
   </style>
 </head>
 
-<body>
+<body oncontextmenu="return false;">
   <audio id="bgmAudio" src="bgm.mp3" loop></audio>
   <div class="floating-particles" id="floatingParticles"></div>
 
@@ -715,13 +740,12 @@
     
     <div class="top-card">
       <div class="header">
-        <img src="ucify.webp" alt="UCify Logo" class="logo-img">
+        <img src="ucify.webp" alt="UCify Logo" class="logo-img" draggable="false">
         <p class="tagline">Premium BGMI UC • Lightning-fast delivery</p>
 
         <div class="partner-block">
-          <div class="partner-badge">OFFICIAL PARTNER</div>
           <!-- BGMI Official Partner Image Added Here -->
-          <img src="bgmi-official.webp" alt="BGMI Official" class="official-logo">
+          <img src="bgmi-official.webp" alt="BGMI Official" class="official-logo" draggable="false">
         </div>
 
         <div class="trust-strip">
@@ -790,7 +814,7 @@
         <h3 class="pack-section-title" id="trialPackTitle">Trial UC Pack</h3>
         <div class="packs-grid" id="trialPacksGrid">
           <div class="pack-card" data-uc="13" data-price="3">
-            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon"> 13 UC</div>
+            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon" draggable="false"> 13 UC</div>
             <div class="pack-price">₹3</div>
           </div>
         </div>
@@ -799,19 +823,19 @@
         <h3 class="pack-section-title">Bulk UC Pack</h3>
         <div class="packs-grid" id="bulkPacksGrid">
           <div class="pack-card" data-uc="1800" data-price="300">
-            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon"> 1800 UC</div>
+            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon" draggable="false"> 1800 UC</div>
             <div class="pack-price">₹300</div>
           </div>
           <div class="pack-card" data-uc="4200" data-price="600">
-            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon"> 4200 UC</div>
+            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon" draggable="false"> 4200 UC</div>
             <div class="pack-price">₹600</div>
           </div>
           <div class="pack-card" data-uc="9600" data-price="1200">
-            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon"> 9600 UC</div>
+            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon" draggable="false"> 9600 UC</div>
             <div class="pack-price">₹1200</div>
           </div>
           <div class="pack-card" data-uc="14800" data-price="1800">
-            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon"> 14800 UC</div>
+            <div class="pack-uc"><img src="uc-logo.webp" class="uc-icon" draggable="false"> 14800 UC</div>
             <div class="pack-price">₹1800</div>
           </div>
         </div>
@@ -843,7 +867,8 @@
           <div class="qr-card">
             <div class="qr-box">
                <div id="qrLoader" class="qr-skeleton"></div>
-               <img id="staticQrImage" src="" alt="Scan QR" style="width:100%; height:100%; object-fit:contain; display:none;">
+               <!-- Allow pointer events on QR code just in case scanner apps need to interact -->
+               <img id="staticQrImage" src="" alt="Scan QR" style="width:100%; height:100%; object-fit:contain; display:none; pointer-events: auto;" draggable="false">
             </div>
             
             <div class="qr-timer" id="qrTimer" style="display:none;">
@@ -871,7 +896,7 @@
             <div class="hint" id="uploadHint" style="font-size: 11px; color: #666;">Tap to browse or drag file here</div>
             
             <input type="file" id="screenshot" accept="image/*" style="display:none;" required>
-            <img id="screenshotPreview">
+            <img id="screenshotPreview" draggable="false">
             <div class="upload-progress" id="uploadProgress"></div>
           </div>
 
