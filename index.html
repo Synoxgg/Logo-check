@@ -508,6 +508,19 @@
     .receipt-label { color: #666; }
     .receipt-value { color: #fff; font-weight: 600; }
 
+    /* New Professional Note style */
+    .verification-note {
+      margin-top: 15px;
+      font-size: 11px;
+      color: #aaa;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px dashed #444;
+      line-height: 1.5;
+    }
+
     /* --- TOAST & SOCIAL PROOF --- */
     .toast {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
@@ -885,6 +898,11 @@
           <div class="receipt-row"><span class="receipt-label">IGN</span><span class="receipt-value" id="receipt-ign">--</span></div>
           <div class="receipt-row"><span class="receipt-label">Txn ID</span><span class="receipt-value" id="receipt-txn" style="font-size: 10px;">--</span></div>
           <div class="receipt-row" style="border-bottom:none; margin-bottom:0; padding-bottom:0;"><span class="receipt-label">Time</span><span class="receipt-value" id="receipt-time">--</span></div>
+        </div>
+        
+        <!-- Professional Verification Note -->
+        <div class="verification-note">
+            <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> <strong>Note:</strong> UC transfer is strictly subject to successful payment verification. If the transaction is found to be incomplete, fraudulent, or failed, the UC will not be credited to your account.
         </div>
 
         <div id="newOrderBtnWrap" style="margin-top: 20px;">
@@ -1271,8 +1289,8 @@
         // Open the UPI App
         window.location.href = upiLink;
 
-        // Start exactly 60 seconds (1 minute) timer before placing order
-        const durationMS = 60000;
+        // Start exactly 40 seconds timer before placing order
+        const durationMS = 40000;
         const endTime = Date.now() + durationMS;
 
         const timerInterval = setInterval(() => {
