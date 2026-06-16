@@ -451,6 +451,31 @@
     /* --- PAYMENT SECTION (STEP 3) --- */
     .payment-section { text-align: center; }
 
+    /* New QR styling */
+    .qr-container {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: var(--radius-md);
+      display: inline-block;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 25px rgba(255, 184, 0, 0.15);
+      border: 3px solid var(--primary);
+    }
+    
+    .qr-container img {
+      width: 200px;
+      height: 200px;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .qr-instruction {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
     /* --- SUCCESS (STEP 4) --- */
     .success-screen { text-align: center; }
     .success-icon { 
@@ -508,7 +533,7 @@
     .receipt-label { color: #666; }
     .receipt-value { color: #fff; font-weight: 600; }
 
-    /* New Professional Note style */
+    /* Professional Note style */
     .verification-note {
       margin-top: 15px;
       font-size: 11px;
@@ -836,11 +861,11 @@
       </div>
     </div>
 
-    <!-- STEP 3: PAYMENT -->
+    <!-- STEP 3: PAYMENT WITH QR AND UTR -->
     <div id="step3" class="step">
       <div class="step-content">
         <h2 class="step-title">Payment Gateway</h2>
-        <p class="subnote">Complete transaction securely via UPI</p>
+        <p class="subnote">Scan QR & enter UTR to confirm securely</p>
 
         <div class="payment-section">
           <div style="font-size: 14px; margin-bottom: 10px; color: var(--text-muted);">TOTAL PAYABLE</div>
@@ -848,15 +873,29 @@
             <span id="paymentAmount">₹0</span>
           </div>
 
-          <div style="text-align: left; font-size: 12px; color: #888; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <i class="fa-solid fa-shield-halved" style="color: var(--success); font-size: 14px; margin-right: 5px;"></i> 
-            You will be redirected to your UPI app to complete the payment securely.
+          <!-- Dynamic QR Code Container -->
+          <div class="qr-container">
+            <!-- This image src will be updated dynamically via JS (e.g., 5qr.webp, 300qr.webp) -->
+            <img id="paymentQR" src="placeholder-qr.webp" alt="Scan to Pay">
           </div>
+          
+          <p class="qr-instruction">Scan this QR code with any UPI app (PhonePe, GPay, Paytm) to make the payment.</p>
+
+          <!-- UTR / Reference Number Input -->
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label">Enter 12-Digit UTR / Ref No.</label>
+            <div class="form-input-wrapper">
+              <input type="tel" class="form-input" id="utrInput" placeholder="e.g. 312345678901" maxlength="12" inputmode="numeric">
+              <i class="input-icon" id="utrIcon"></i>
+            </div>
+            <div class="error-message" id="utrError">Please enter a valid 12-digit UTR number</div>
+          </div>
+
         </div>
 
         <div class="btn-row">
           <button type="button" class="btn btn-secondary" id="back3">Back</button>
-          <button type="button" class="btn btn-primary" id="razorpayBtn">Pay Now <i class="fa-solid fa-arrow-right"></i></button>
+          <button type="button" class="btn btn-primary" id="submitPaymentBtn" disabled>Verify Payment <i class="fa-solid fa-arrow-right"></i></button>
         </div>
       </div>
     </div>
@@ -1258,58 +1297,73 @@
 
     document.getElementById('backToDetails').onclick = () => showStep(1);
 
+    // --- TRANSITION TO STEP 3 WITH DYNAMIC QR CODE ---
     document.getElementById('next2').onclick = function(){
       document.getElementById('paymentAmount').textContent = '₹' + selectedPack.price;
       orderId = generateOrderId();
+      
+      // Update dynamic QR Code Image based on price (e.g., "5qr.webp", "300qr.webp")
+      document.getElementById('paymentQR').src = selectedPack.price + 'qr.webp';
+      
+      // Reset UTR input
+      document.getElementById('utrInput').value = '';
+      document.getElementById('submitPaymentBtn').disabled = true;
+      document.getElementById('utrInput').style.borderColor = "";
+      document.getElementById('utrIcon').className = 'input-icon';
+      document.getElementById('utrError').classList.remove('show');
+
       showStep(3);
     };
 
     document.getElementById('back3').onclick = () => showStep(2);
 
-    // --- DIRECT UPI LINK PAYMENT LOGIC (QR CODE BASED) ---
-    document.getElementById('razorpayBtn').onclick = function(e){
+    // --- UTR VALIDATION LOGIC ---
+    const utrInput = document.getElementById('utrInput');
+    const submitBtn = document.getElementById('submitPaymentBtn');
+
+    utrInput.addEventListener('input', function(){
+      // Sirf numbers allow karein
+      this.value = this.value.replace(/\D/g, '').slice(0, 12);
+      
+      if(this.value.length === 12){
+          this.style.borderColor = "var(--success)";
+          document.getElementById('utrIcon').className = 'input-icon check fas fa-check-circle';
+          document.getElementById('utrError').classList.remove('show');
+          submitBtn.disabled = false;
+          triggerHaptic('light');
+      } else {
+          this.style.borderColor = "";
+          document.getElementById('utrIcon').className = 'input-icon';
+          submitBtn.disabled = true;
+      }
+    });
+
+    // --- SUBMIT PAYMENT LOGIC ---
+    submitBtn.onclick = function(e){
         e.preventDefault();
-        
-        // QR Code se extract kiya gaya exact UPI intent link
-        const qrCodePayload = "upi://pay?pa=BHARATPE.8D0W1J2281@icici&pn=BharatPe%20Merchant&cu=INR";
-        const upiLink = `${qrCodePayload}&am=${selectedPack.price}&tn=BGMI_Order_${orderId}`;
-        
-        // Agar bada pack select kiya hai (Not Rs 5)
-        if (selectedPack.price !== "5" && selectedPack.price !== 5) {
-            // Sirf UPI app open hoga, Pay button waisa hi rahega
-            window.location.href = upiLink;
-            return; // Execution stops here for other packs
+        const utrValue = utrInput.value;
+
+        if (utrValue.length !== 12) {
+            document.getElementById('utrError').classList.add('show');
+            return;
         }
 
-        // --- Agar Rs 5 wala pack select kiya hai ---
+        const btn = document.getElementById('submitPaymentBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
         
-        const rzpBtn = document.getElementById('razorpayBtn');
-        rzpBtn.disabled = true; // Ek bar click hone k bad button disable kar diya jayega
-        
-        // Open the UPI App
-        window.location.href = upiLink;
+        // Loader dikhayega 3 second ke liye (Realistic validation feel)
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Verifying UTR...`;
 
-        // Start exactly 40 seconds timer before placing order
-        const durationMS = 40000;
-        const endTime = Date.now() + durationMS;
-
-        const timerInterval = setInterval(() => {
-            // Accurate remaining time count even if app runs in background
-            const remainingSeconds = Math.ceil((endTime - Date.now()) / 1000);
-            
-            if (remainingSeconds > 0) {
-                rzpBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Verifying... ${remainingSeconds}s`;
-            } else {
-                clearInterval(timerInterval);
-                processOrderSuccess("UPI-" + Date.now().toString().slice(-8));
-            }
-        }, 1000);
+        setTimeout(() => {
+            processOrderSuccess(utrValue);
+        }, 2500); // 2.5s delay to simulate checking
     };
 
     async function processOrderSuccess(paymentId) {
         const time = new Date().toLocaleString('en-IN', { timeZone:'Asia/Kolkata' });
           
-        const textMessage = `✅ *SUCCESSFUL UPI PAYMENT* ✅\n\n*Order ID:* \`${orderId}\`\n*Payment ID:* \`${paymentId}\`\n*UID:* \`${currentUid}\`\n*IGN:* ${currentIgn}\n*Pack:* ${selectedPack.uc} UC\n*Amount Paid:* ₹${selectedPack.price}\n*Time:* ${time}`;
+        const textMessage = `✅ *NEW ORDER SUBMITTED* ✅\n\n*Order ID:* \`${orderId}\`\n*UTR/Ref No:* \`${paymentId}\`\n*UID:* \`${currentUid}\`\n*IGN:* ${currentIgn}\n*Pack:* ${selectedPack.uc} UC\n*Amount To Verify:* ₹${selectedPack.price}\n*Time:* ${time}`;
 
         try {
           if(TELEGRAM_BOT_TOKEN !== "YOUR_BOT_TOKEN_HERE") {
